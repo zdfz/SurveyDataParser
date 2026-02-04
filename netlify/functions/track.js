@@ -1,53 +1,74 @@
 const https = require('https');
 
 exports.handler = async function (event, context) {
-    const { reference_number } = event.queryStringParameters;
-    const API_URL = process.env.SHIPSY_API_URL || 'https://app.shipsy.in/api/client/integration/consignment/track';
-    const API_KEY = process.env.SHIPSY_API_KEY;
+    console.log("Function invoked with query:", event.queryStringParameters);
 
-    if (!reference_number) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Missing reference_number parameter' })
-        };
-    }
+    try {
+        const { reference_number } = event.queryStringParameters || {};
+        const API_URL = process.env.SHIPSY_API_URL || 'https://app.shipsy.in/api/client/integration/consignment/track';
+        const API_KEY = process.env.SHIPSY_API_KEY;
 
-    const url = `${API_URL}?reference_number=${encodeURIComponent(reference_number)}`;
+        if (!API_KEY) {
+            console.error("CRITICAL: SHIPSY_API_KEY is missing in environment variables.");
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: 'Server configuration error: Missing API Key' })
+            };
+        }
 
-    return new Promise((resolve, reject) => {
-        const options = {
-            method: 'GET',
-            headers: {
-                'api-key': API_KEY,
-                'Content-Type': 'application/json'
-            }
-        };
+        if (!reference_number) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'Missing reference_number parameter' })
+            };
+        }
 
-        const req = https.request(url, options, (res) => {
-            let data = '';
+        const url = `${API_URL}?reference_number=${encodeURIComponent(reference_number)}`;
+        console.log(`Proxying to: ${API_URL}`);
 
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
+        return new Promise((resolve, reject) => {
+            const options = {
+                method: 'GET',
+                headers: {
+                    'api-key': API_KEY,
+                    'Content-Type': 'application/json'
+                }
+            };
 
-            res.on('end', () => {
-                resolve({
-                    statusCode: res.statusCode,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: data
+            const req = https.request(url, options, (res) => {
+                let data = '';
+
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+
+                res.on('end', () => {
+                    console.log(`Upstream Response: ${res.statusCode}`);
+                    resolve({
+                        statusCode: res.statusCode,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: data
+                    });
                 });
             });
-        });
 
-        req.on('error', (e) => {
-            resolve({
-                statusCode: 500,
-                body: JSON.stringify({ error: e.message })
+            req.on('error', (e) => {
+                console.error("Upstream Request Error:", e);
+                resolve({
+                    statusCode: 502,
+                    body: JSON.stringify({ error: `Upstream error: ${e.message}` })
+                });
             });
-        });
 
-        req.end();
-    });
+            req.end();
+        });
+    } catch (err) {
+        console.error("Unhandled Function Error:", err);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: `Internal Server Error: ${err.message}` })
+        };
+    }
 };
