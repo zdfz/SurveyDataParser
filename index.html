@@ -412,7 +412,8 @@
                 });
 
                 if (!response.ok) {
-                    console.error(`API Error for ${referenceNumber}: ${response.status} ${response.statusText}`);
+                    const errorText = await response.text();
+                    console.error(`API Error for ${referenceNumber}: ${response.status} ${response.statusText}`, errorText);
                     return null;
                 }
                 const data = await response.json();
