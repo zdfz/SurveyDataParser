@@ -414,12 +414,18 @@
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error(`API Error for ${referenceNumber}: ${response.status} ${response.statusText}`, errorText);
+
+                    // Critical Error Check
+                    if (errorText.includes("Missing API Key")) {
+                        throw new Error("MISSING_API_KEY");
+                    }
                     return null;
                 }
                 const data = await response.json();
                 console.log(`API Success for ${referenceNumber}`, data);
                 return data;
             } catch (err) {
+                if (err.message === "MISSING_API_KEY") throw err; // Re-throw critical error
                 console.error(`API Exception for ${referenceNumber}:`, err);
                 return null;
             }
