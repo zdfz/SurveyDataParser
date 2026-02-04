@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Data Parser</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Euclid Circular B';
+            src: url('font/Euclid Circular B Light.ttf') format('truetype');
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Euclid Circular B';
+            src: url('font/Euclid Circular B Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Euclid Circular B';
+            src: url('font/Euclid Circular B Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Euclid Circular B';
+            src: url('font/Euclid Circular B SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Euclid Circular B';
+            src: url('font/Euclid Circular B Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        :root {
+            /* User Palette */
+            --primary--main: #1f6a4a;
+            --primary--surface: #f2f6f4;
+            --primary--focus: #e4ede9;
+            --primary--border: #d7e4de;
+            --primary-hover: #2e9e6e;
+            --primary--pressed: #103525;
+
+            --secondary--main: #ff9d18;
+            --secondary--surface: #fff5e8;
+            --secondary--focus: #ffebd1;
+            --secondary--border: #ffd8a3;
+            --secondary--hover: #e58400;
+            --secondary--pressed: #aa6910;
+
+            /* Mappings */
+            --primary: var(--primary--main);
+            --success: var(--primary--main);
+
+            /* UI Defaults */
+            --background: var(--primary--surface);
+            --surface: #FFFFFF;
+            --text-main: #1F2937;
+            --text-secondary: #6B7280;
+            --border: var(--primary--border);
+        }
+
+        body {
+            font-family: 'Euclid Circular B', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font-family: inherit;
+        }
+
+        header {
+            background: var(--surface);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .upload-container {
+            background: var(--surface);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 4rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 2rem;
+        }
+
+        .upload-container:hover,
+        .upload-container.drag-active {
+            border-color: var(--primary);
+            background-color: var(--primary--focus);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+
+
+        .table-container {
+            background: var(--surface);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 600px;
+        }
+
+        .table-header-controls {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-wrapper {
+            overflow: auto;
+            flex: 1;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #F9FAFB;
+            font-weight: 600;
+            color: var(--text-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr:hover {
+            background-color: #F9FAFB;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .preview-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .steps-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--surface);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary--focus);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step-text strong {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            margin-bottom: 0.1rem;
+        }
+
+        .step-text span {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .step-arrow {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Shipment Survey Parser</h1>
+        <img src="logo.png" alt="Logo" style="height: 40px;">
+    </header>
+
+    <main>
+        <!-- Steps Explanation -->
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-icon">1</div>
+                <div class="step-text">
+                    <strong>Upload Responses</strong>
+                    <span>Select your Excel file</span>
+                </div>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-icon">2</div>
+                <div class="step-text">
+                    <strong>Auto-Process</strong>
+                    <span>System fetches courier data</span>
+                </div>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-icon">3</div>
+                <div class="step-text">
+                    <strong>Download</strong>
+                    <span>Get enriched report</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="uploadSection" class="upload-container" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 16V4M12 4L8 8M12 4L16 8M4 20H20" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+            <h2>Upload Survey Export File</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Drag & drop or click to select (.xlsx, .csv)
+            </p>
+            <button class="btn">Select File</button>
+            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
+            <p id="errorMsg" style="color: red; margin-top: 1rem; display: none;"></p>
+        </div>
+
+        <div id="resultsSection" class="hidden">
+            <!-- Stats Removed -->
+
+            <div class="table-container">
+                <div class="table-header-controls">
+                    <span class="preview-title">Data Preview</span>
+                    <div>
+                        <button class="btn btn-success" onclick="exportToExcel()">Download Results</button>
+                        <button class="btn"
+                            style="background: var(--background); color: var(--text-main); margin-left: 0.5rem;"
+                            onclick="resetApp()">Return to Home</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="previewTable">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="loading" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p id="loadingText" style="margin-top: 1rem; font-weight: 500;">Processing...</p>
+    </div>
+
+    <script>
+        // --- API Integration (Netlify Function) ---
+        async function fetchShipmentData(referenceNumber) {
+            try {
+                // Call the Netlify function (proxy)
+                const url = `/.netlify/functions/track?reference_number=${encodeURIComponent(referenceNumber)}`;
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (err) { return null; }
+        }
+
+        function extractRiderInfo(events) {
+            if (!events || !Array.isArray(events)) return null;
+            const deliveredEvent = events.find(ev => ev.type === 'delivered');
+            if (!deliveredEvent) return null;
+            return {
+                worker_name: deliveredEvent.worker_name || '',
+                worker_code: deliveredEvent.worker_code || '',
+                worker_phone: deliveredEvent.worker_phone || '',
+                delivery_date: deliveredEvent.event_time_utc ? new Date(deliveredEvent.event_time_utc).toISOString().split('T')[0] : '',
+                delivery_time: deliveredEvent.event_time_utc ? new Date(deliveredEvent.event_time_utc).toTimeString().split(' ')[0] : '',
+                hub_code: deliveredEvent.hub_code || '',
+            };
+        }
+
+
+
+        async function fetchApiData() {
+            if (parsedData.length === 0) { showLoading(false); renderPreview(); return; }
+            showLoading(true, `Fetching API Data (0/${parsedData.length})...`);
+
+            const batchSize = 20;
+            for (let i = 0; i < parsedData.length; i += batchSize) {
+                const batch = parsedData.slice(i, i + batchSize);
+                await Promise.all(batch.map(async (item) => {
+                    const ref = item["Shipment Number"];
+                    if (ref) {
+                        try {
+                            const apiResp = await fetchShipmentData(ref);
+                            if (apiResp && apiResp.events) {
+                                const riderInfo = extractRiderInfo(apiResp.events);
+                                if (riderInfo) Object.assign(item, riderInfo);
+                            }
+                        } catch (e) { console.warn("API failed for " + ref, e); }
+                    }
+                }));
+                showLoading(true, `Fetching API Data (${Math.min(i + batchSize, parsedData.length)}/${parsedData.length})...`);
+            }
+
+            showLoading(false);
+
+            renderPreview();
+            uploadSection.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+        }
+
+
+        // --- UI Functions ---
+        function renderPreview() {
+            let theadHtml = "<tr>"; COLUMNS.forEach(col => { theadHtml += `<th>${col}</th>`; }); theadHtml += "</tr>";
+            previewTable.querySelector('thead').innerHTML = theadHtml;
+            let tbodyHtml = "";
+            parsedData.slice(0, 50).forEach(row => { tbodyHtml += "<tr>"; COLUMNS.forEach(col => { tbodyHtml += `<td>${row[col] || ""}</td>`; }); tbodyHtml += "</tr>"; });
+            previewTable.querySelector('tbody').innerHTML = tbodyHtml;
+        }
+
+        function exportToExcel() {
+            if (parsedData.length === 0) { alert("No data to export"); return; }
+            const ws = XLSX.utils.json_to_sheet(parsedData, { header: COLUMNS });
+            ws['!cols'] = COLUMNS.map(() => ({ wch: 20 }));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Parsed Data");
+            XLSX.writeFile(wb, `Parsed_Shipment_Survey_${new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)}.xlsx`);
+        }
+        function resetApp() {
+            parsedData = [];
+            fileInput.value = "";
+            resultsSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            errorMsg.style.display = 'none';
+            previewTable.querySelector('tbody').innerHTML = "";
+        }
+        function showError(msg) { if (msg) { errorMsg.innerText = msg; errorMsg.style.display = 'block'; } else { errorMsg.style.display = 'none'; } }
+        function showLoading(show, text = "Processing...") {
+            loadingText.innerText = text;
+            if (show) loadingOverlay.classList.remove('hidden'); else loadingOverlay.classList.add('hidden');
+        }
+    </script>
+
+</body>
+
+</html>
