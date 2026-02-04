@@ -458,22 +458,36 @@
             showLoading(true, `Fetching API Data (0/${parsedData.length})...`);
 
             const batchSize = 20;
-            for (let i = 0; i < parsedData.length; i += batchSize) {
-                const batch = parsedData.slice(i, i + batchSize);
-                console.log(`Processing batch ${i} to ${i + batchSize}`);
-                await Promise.all(batch.map(async (item) => {
-                    const ref = item["Shipment Number"];
-                    if (ref) {
-                        try {
-                            const apiResp = await fetchShipmentData(ref);
-                            if (apiResp && apiResp.events) {
-                                const riderInfo = extractRiderInfo(apiResp.events);
-                                if (riderInfo) Object.assign(item, riderInfo);
+            try {
+                for (let i = 0; i < parsedData.length; i += batchSize) {
+                    const batch = parsedData.slice(i, i + batchSize);
+                    console.log(`Processing batch ${i} to ${i + batchSize}`);
+                    await Promise.all(batch.map(async (item) => {
+                        const ref = item["Shipment Number"];
+                        if (ref) {
+                            try {
+                                const apiResp = await fetchShipmentData(ref);
+                                if (apiResp && apiResp.events) {
+                                    const riderInfo = extractRiderInfo(apiResp.events);
+                                    if (riderInfo) Object.assign(item, riderInfo);
+                                }
+                            } catch (e) {
+                                if (e.message === "MISSING_API_KEY") throw e; // Stop everything
+                                console.warn("API failed for " + ref, e);
                             }
-                        } catch (e) { console.warn("API failed for " + ref, e); }
-                    }
-                }));
-                showLoading(true, `Fetching API Data (${Math.min(i + batchSize, parsedData.length)}/${parsedData.length})...`);
+                        }
+                    }));
+                    showLoading(true, `Fetching API Data (${Math.min(i + batchSize, parsedData.length)}/${parsedData.length})...`);
+                }
+            } catch (err) {
+                if (err.message === "MISSING_API_KEY") {
+                    showError("CRITICAL ERROR: API Key is missing on Server. Please set 'SHIPSY_API_KEY' in Netlify Env Vars and REDEPLOY.");
+                } else {
+                    console.error("Global API Error:", err);
+                    showError("An unexpected error occurred: " + err.message);
+                }
+                showLoading(false);
+                return;
             }
 
             console.log("API Fetch Completed. Rendering Preview.");
