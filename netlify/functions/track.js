@@ -5,7 +5,7 @@ exports.handler = async function (event, context) {
 
     try {
         const { reference_number } = event.queryStringParameters || {};
-        const API_URL = process.env.SHIPSY_API_URL || 'https://app.shipsy.in/api/client/integration/consignment/track';
+        const API_URL = process.env.SHIPSY_API_URL;
         const API_KEY = process.env.SHIPSY_API_KEY;
 
         if (!API_KEY) {
@@ -13,6 +13,14 @@ exports.handler = async function (event, context) {
             return {
                 statusCode: 500,
                 body: JSON.stringify({ error: 'Server configuration error: Missing API Key' })
+            };
+        }
+
+        if (!API_URL) {
+            console.error("CRITICAL: SHIPSY_API_URL is missing in environment variables.");
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: 'Server configuration error: Missing API URL' })
             };
         }
 
