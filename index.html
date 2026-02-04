@@ -392,16 +392,13 @@
 
     <script>
         // --- Debug Initialization ---
-        console.log("App Initialized");
         if (typeof XLSX === 'undefined') {
             console.error("CRITICAL: XLSX library not loaded!");
         } else {
-            console.log("XLSX library loaded successfully version:", XLSX.version);
         }
 
         // --- API Integration (Netlify Function) ---
         async function fetchShipmentData(referenceNumber) {
-            console.log(`Fetching data for ref: ${referenceNumber}`);
             try {
                 // Call the Netlify function (proxy)
                 const url = `/.netlify/functions/track?reference_number=${encodeURIComponent(referenceNumber)}`;
@@ -422,7 +419,6 @@
                     return null;
                 }
                 const data = await response.json();
-                console.log(`API Success for ${referenceNumber}`, data);
                 return data;
             } catch (err) {
                 if (err.message === "MISSING_API_KEY") throw err; // Re-throw critical error
@@ -448,9 +444,7 @@
 
 
         async function fetchApiData() {
-            console.log("Starting API Data Fetch...");
             if (parsedData.length === 0) {
-                console.log("No parsed data to fetch API for.");
                 showLoading(false);
                 renderPreview();
                 return;
@@ -461,7 +455,6 @@
             try {
                 for (let i = 0; i < parsedData.length; i += batchSize) {
                     const batch = parsedData.slice(i, i + batchSize);
-                    console.log(`Processing batch ${i} to ${i + batchSize}`);
                     await Promise.all(batch.map(async (item) => {
                         const ref = item["Shipment Number"];
                         if (ref) {
@@ -490,7 +483,6 @@
                 return;
             }
 
-            console.log("API Fetch Completed. Rendering Preview.");
             showLoading(false);
 
             renderPreview();
@@ -501,7 +493,6 @@
 
         // --- UI Functions ---
         function renderPreview() {
-            console.log("Rendering Preview Table");
             let theadHtml = "<tr>"; COLUMNS.forEach(col => { theadHtml += `<th>${col}</th>`; }); theadHtml += "</tr>";
             previewTable.querySelector('thead').innerHTML = theadHtml;
             let tbodyHtml = "";
@@ -524,14 +515,12 @@
             uploadSection.classList.remove('hidden');
             errorMsg.style.display = 'none';
             previewTable.querySelector('tbody').innerHTML = "";
-            console.log("App Reset");
         }
         function showError(msg) {
             console.error("Error Shown:", msg);
             if (msg) { errorMsg.innerText = msg; errorMsg.style.display = 'block'; } else { errorMsg.style.display = 'none'; }
         }
         function showLoading(show, text = "Processing...") {
-            console.log(`Loading Status: ${show}, Text: ${text}`);
             loadingText.innerText = text;
             if (show) loadingOverlay.classList.remove('hidden'); else loadingOverlay.classList.add('hidden');
         }
@@ -566,19 +555,16 @@
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
         dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-active'); });
         dropZone.addEventListener('drop', (e) => {
-            console.log("File Dropped");
             e.preventDefault();
             dropZone.classList.remove('drag-active');
             if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
         });
         fileInput.addEventListener('change', (e) => {
-            console.log("File Input Changed");
             if (e.target.files.length) handleFile(e.target.files[0]);
         });
 
         // --- Core Logic ---
         function handleFile(file) {
-            console.log("Handling File:", file.name, "Size:", file.size);
             if (!file) return;
             const validExts = ['.xlsx', '.xls', '.csv'];
             if (!validExts.some(ext => file.name.toLowerCase().endsWith(ext))) {
@@ -590,7 +576,6 @@
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                console.log("File Read Complete. Starting Parse.");
                 try {
                     const data = new Uint8Array(e.target.result);
                     if (typeof XLSX === 'undefined') {
@@ -599,7 +584,6 @@
                     const workbook = XLSX.read(data, { type: 'array' });
                     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-                    console.log(`Parsed ${rawRows.length} raw rows.`);
                     processRows(rawRows);
                 } catch (err) {
                     console.error("Parsing Exception:", err);
@@ -616,7 +600,6 @@
         }
 
         function processRows(rows) {
-            console.log("Processing Rows...");
             parsedData = [];
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
@@ -649,7 +632,6 @@
                     parsedData.push(parsed);
                 }
             }
-            console.log(`Extracted ${parsedData.length} valid rows.`);
             // Automatically fetch API data after parsing
             fetchApiData();
         }
