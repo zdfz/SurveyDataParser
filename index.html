@@ -126,6 +126,8 @@
             transition: all 0.3s ease;
             cursor: pointer;
             margin-bottom: 2rem;
+            position: relative;
+            /* Enabled for absolute positioning of children */
         }
 
         .upload-container:hover,
@@ -158,6 +160,22 @@
 
         .btn-success {
             background-color: var(--success);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid var(--text-secondary);
+            color: var(--text-secondary);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            padding: 0.6rem 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+            background-color: rgba(0, 0, 0, 0.05);
         }
 
         .hidden {
@@ -304,10 +322,102 @@
             color: var(--text-secondary);
         }
 
-        .step-arrow {
-            color: var(--text-secondary);
+        /* --- Mode Selection Cards --- */
+        .mode-selection-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .mode-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 250px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-card.selected {
+            border-color: currentColor;
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .mode-card.not-selected {
+            opacity: 0.6;
+            filter: grayscale(0.8);
+        }
+
+        .card-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: -3.5rem auto 1.5rem;
+            /* Pop out of top */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Card 1: Survey (Green) */
+        .mode-card[data-mode="survey"] {
+            background: linear-gradient(135deg, #1f6a4a, #2e9e6e);
+            color: white;
+        }
+
+        .mode-card[data-mode="survey"] .card-number {
+            color: #1f6a4a;
+        }
+
+        /* Card 2: Undelivered (Orange) */
+        .mode-card[data-mode="undelivered"] {
+            background: linear-gradient(135deg, #ff9d18, #ffbd59);
+            color: white;
+        }
+
+        .mode-card[data-mode="undelivered"] .card-number {
+            color: #ff9d18;
+        }
+
+        /* Card 3: Dispute (Teal) */
+        .mode-card[data-mode="dispute"] {
+            background: linear-gradient(135deg, #00A0AF, #2cccdb);
+            color: white;
+        }
+
+        .mode-card[data-mode="dispute"] .card-number {
+            color: #00A0AF;
+        }
+
+        .card-title {
             font-size: 1.25rem;
-            opacity: 0.5;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -315,49 +425,58 @@
 <body>
 
     <header>
-        <h1>Shipment Survey Parser</h1>
+        <h1>Shipment Data Parser</h1>
         <img src="logo.png" alt="Logo" style="height: 40px;">
     </header>
 
     <main>
-        <!-- Steps Explanation -->
-        <div class="steps-container">
-            <div class="step">
-                <div class="step-icon">1</div>
-                <div class="step-text">
-                    <strong>Upload Responses</strong>
-                    <span>Select your Excel file</span>
+        <!-- Mode Selection -->
+        <h2 id="modeHeader" style="text-align: center; margin-bottom: 3rem; color: var(--text-main); font-weight: 600;">
+            Select
+            Processing Mode</h2>
+        <div id="modeSelection" class="mode-selection-container">
+            <div class="mode-card" data-mode="survey" onclick="selectMode('survey')">
+                <div class="card-number">01</div>
+                <div class="card-title">Survey Responses</div>
+                <div class="card-desc">
+                    Extract customer details, CSAT scores, and feedback from survey texts.
                 </div>
             </div>
-            <div class="step-arrow">→</div>
-            <div class="step">
-                <div class="step-icon">2</div>
-                <div class="step-text">
-                    <strong>Auto-Process</strong>
-                    <span>System fetches courier data</span>
+
+            <div class="mode-card" data-mode="undelivered" onclick="selectMode('undelivered')">
+                <div class="card-number">02</div>
+                <div class="card-title">Undelivered / Invalid</div>
+                <div class="card-desc">
+                    Parse delivery failure reasons (NDR), status, and customer issues.
                 </div>
             </div>
-            <div class="step-arrow">→</div>
-            <div class="step">
-                <div class="step-icon">3</div>
-                <div class="step-text">
-                    <strong>Download</strong>
-                    <span>Get enriched report</span>
+
+            <div class="mode-card" data-mode="dispute" onclick="selectMode('dispute')">
+                <div class="card-number">03</div>
+                <div class="card-title">Disputes</div>
+                <div class="card-desc">
+                    Analyze shipment disputes, claims, and non-delivery complaints.
                 </div>
             </div>
         </div>
 
-        <div id="uploadSection" class="upload-container" onclick="document.getElementById('fileInput').click()">
+        <div id="uploadSection" class="upload-container hidden" onclick="document.getElementById('fileInput').click()">
+            <button class="btn btn-secondary" onclick="event.stopPropagation(); resetApp()"
+                style="position: absolute; top: 1.5rem; left: 1.5rem; margin: 0; z-index: 10;">
+                ← Change Mode
+            </button>
             <div class="upload-icon">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 16V4M12 4L8 8M12 4L16 8M4 20H20" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </div>
-            <h2>Upload Survey Export File</h2>
+            <h2 id="uploadTitle">Upload Survey Export File</h2>
             <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Drag & drop or click to select (.xlsx, .csv)
             </p>
-            <button class="btn">Select File</button>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <button class="btn">Select File</button>
+            </div>
             <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
             <p id="errorMsg" style="color: red; margin-top: 1rem; display: none;"></p>
         </div>
@@ -391,6 +510,67 @@
     </div>
 
     <script>
+        // --- Configuration & State ---
+        let currentMode = null; // survey, undelivered, dispute
+        let parsedData = [];
+
+        // --- Column Definitions ---
+        const COLS_SURVEY = [
+            "Date", "Time", "Bot User", "Shipment Number", "CSAT", "NPS", "Speed of Delivery",
+            "Shipment Condition", "Courier Behavior", "Payment Issue", "Improvement Suggestions",
+            "Status", "Customer Name", "Service Code", "Order Reference", "Currency", "Price",
+            "Consignee Name", "Consignee City", "Consignee Country", "Consignee Phone",
+            "Shipper Name", "Shipper City", "Shipper Country", "Shipper Phone",
+            "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
+        ];
+
+        const COLS_UNDELIVERED = [
+            "Date", "Time", "Bot User", "Shipment Number", "NDR Reason", "Status",
+            "Customer Name", "Service Code", "Order Reference", "Customer ID Ref", "Incoterm",
+            "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
+        ];
+
+        const COLS_DISPUTE = [
+            "Date", "Time", "Bot User", "Shipment Number", "Dispute Reason", "NDR", "Status",
+            "Customer Name", "Service Code", "Order Reference",
+            "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
+        ];
+
+        function getColumns() {
+            if (currentMode === 'undelivered') return COLS_UNDELIVERED;
+            if (currentMode === 'dispute') return COLS_DISPUTE;
+            return COLS_SURVEY;
+        }
+
+        // --- Mode Selection Logic ---
+        // --- Mode Selection Logic ---
+        function selectMode(mode) {
+            currentMode = mode;
+            // Hide selection, show upload
+            const modeSel = document.getElementById('modeSelection');
+            const uploadSec = document.getElementById('uploadSection');
+
+            document.getElementById('modeHeader').classList.add('hidden'); // Hide Header
+            modeSel.classList.add('hidden');
+            uploadSec.classList.remove('hidden');
+
+            document.querySelectorAll('.mode-card').forEach(card => {
+                if (card.dataset.mode === mode) {
+                    card.classList.add('selected');
+                    card.classList.remove('not-selected');
+                } else {
+                    card.classList.remove('selected');
+                    card.classList.add('not-selected');
+                }
+            });
+
+            // Update upload text
+            const titleEl = document.getElementById('uploadTitle');
+            if (mode === 'survey') titleEl.innerText = "Upload Survey Export File";
+            else if (mode === 'undelivered') titleEl.innerText = "Upload Undelivered/Invalid Reports";
+            else if (mode === 'dispute') titleEl.innerText = "Upload Dispute Reports";
+        }
+
         // --- Debug Initialization ---
         if (typeof XLSX === 'undefined') {
             console.error("CRITICAL: XLSX library not loaded!");
@@ -493,26 +673,39 @@
 
         // --- UI Functions ---
         function renderPreview() {
-            let theadHtml = "<tr>"; COLUMNS.forEach(col => { theadHtml += `<th>${col}</th>`; }); theadHtml += "</tr>";
+            const cols = getColumns();
+            let theadHtml = "<tr>"; cols.forEach(col => { theadHtml += `<th>${col}</th>`; }); theadHtml += "</tr>";
             previewTable.querySelector('thead').innerHTML = theadHtml;
             let tbodyHtml = "";
-            parsedData.slice(0, 50).forEach(row => { tbodyHtml += "<tr>"; COLUMNS.forEach(col => { tbodyHtml += `<td>${row[col] || ""}</td>`; }); tbodyHtml += "</tr>"; });
+            parsedData.slice(0, 50).forEach(row => { tbodyHtml += "<tr>"; cols.forEach(col => { tbodyHtml += `<td>${row[col] || ""}</td>`; }); tbodyHtml += "</tr>"; });
             previewTable.querySelector('tbody').innerHTML = tbodyHtml;
         }
 
         function exportToExcel() {
             if (parsedData.length === 0) { alert("No data to export"); return; }
-            const ws = XLSX.utils.json_to_sheet(parsedData, { header: COLUMNS });
-            ws['!cols'] = COLUMNS.map(() => ({ wch: 20 }));
+            const cols = getColumns();
+            const ws = XLSX.utils.json_to_sheet(parsedData, { header: cols });
+            ws['!cols'] = cols.map(() => ({ wch: 20 }));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Parsed Data");
-            XLSX.writeFile(wb, `Parsed_Shipment_Survey_${new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)}.xlsx`);
+            XLSX.writeFile(wb, `Parsed_${currentMode}_${new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)}.xlsx`);
         }
         function resetApp() {
             parsedData = [];
             fileInput.value = "";
+            // Hide Results & Upload, Show Selection
             resultsSection.classList.add('hidden');
-            uploadSection.classList.remove('hidden');
+            uploadSection.classList.add('hidden');
+            document.getElementById('modeSelection').classList.remove('hidden');
+            document.getElementById('modeHeader').classList.remove('hidden'); // Show Header
+
+            // Reset state
+            currentMode = null;
+            document.querySelectorAll('.mode-card').forEach(c => {
+                c.classList.remove('selected');
+                c.classList.remove('not-selected');
+            });
+
             errorMsg.style.display = 'none';
             previewTable.querySelector('tbody').innerHTML = "";
         }
@@ -524,22 +717,6 @@
             loadingText.innerText = text;
             if (show) loadingOverlay.classList.remove('hidden'); else loadingOverlay.classList.add('hidden');
         }
-
-        // --- Configuration ---
-        const COLUMNS = [
-            "Date", "Time", "Bot User", "Shipment Number",
-            "CSAT", "NPS", "Speed of Delivery",
-            "Shipment Condition", "Courier Behavior", "Payment Issue",
-            "Improvement Suggestions", "Status", "Customer Name",
-            "Service Code", "Order Reference", "Currency", "Price",
-            "Consignee Name", "Consignee City", "Consignee Country", "Consignee Phone",
-            "Shipper Name", "Shipper City", "Shipper Country", "Shipper Phone",
-            // API Columns
-            "worker_name", "worker_code", "worker_phone",
-            "delivery_date", "delivery_time", "hub_code"
-        ];
-
-        let parsedData = [];
 
         // --- DOM Elements ---
         const dropZone = document.getElementById('uploadSection');
@@ -605,9 +782,16 @@
                 const row = rows[i];
                 if (!row || row.length === 0) continue;
                 let contentIndex = -1;
+                // Heuristic to find the 'Job Done Name' or content column
                 for (let j = 0; j < row.length; j++) {
-                    if (row[j] && typeof row[j] === 'string' && (row[j].includes("Survey for shipment:") || row[j].includes("|||"))) {
-                        contentIndex = j; break;
+                    if (row[j] && typeof row[j] === 'string') {
+                        const txt = row[j];
+                        if (txt.includes("Survey for shipment:") ||
+                            txt.includes("Undelivered -") ||
+                            txt.includes("Invalid Reason:") ||
+                            txt.includes("Dispute -")) {
+                            contentIndex = j; break;
+                        }
                     }
                 }
                 if (contentIndex === -1) continue;
@@ -624,7 +808,16 @@
                         }
                     } catch (e) { }
                 }
-                const parsed = parseRowString(cellContent);
+
+                // Check Mode Compatibility
+                let isCompatible = false;
+                if (currentMode === 'survey' && cellContent.includes("Survey for shipment:")) isCompatible = true;
+                if (currentMode === 'undelivered' && (cellContent.includes("Undelivered -") || cellContent.includes("Invalid Reason:"))) isCompatible = true;
+                if (currentMode === 'dispute' && (cellContent.includes("Dispute"))) isCompatible = true;
+
+                if (!isCompatible) continue;
+
+                const parsed = parseRowString(cellContent, currentMode);
                 if (parsed) {
                     parsed["Date"] = dateStr;
                     parsed["Time"] = timeStr;
@@ -636,36 +829,75 @@
             fetchApiData();
         }
 
-        function parseRowString(text) {
+        function parseRowString(text, mode) {
             const safeText = text || "";
-            const parts = safeText.split("|||");
-            const surveyPart = parts[0] || "";
-            const shipmentPart = parts[1] || "";
+            // Helper to clean and extract
             const extract = (pattern, source) => { const match = source.match(pattern); return match ? match[1].trim() : ""; };
-            return {
-                "Shipment Number": extract(/Survey for shipment:\s*([^,]+)/i, surveyPart),
-                "CSAT": extract(/How was your experience\?\s*(\d+)/i, surveyPart),
-                "NPS": extract(/Recommendation Rate:\s*(\d+)/i, surveyPart),
-                "Speed of Delivery": extract(/How is delivery speed\?\s*(\d+)/i, surveyPart),
-                "Shipment Condition": extract(/How was package condition\?\s*(\d+)/i, surveyPart),
-                "Courier Behavior": extract(/Was the courier's behavior good\?\s*(\d+)/i, surveyPart),
-                "Payment Issue": extract(/Any payment issue\?\s*([^,]+)/i, surveyPart),
-                "Improvement Suggestions": extract(/How can we improve\?\s*([^,]+)/i, surveyPart),
-                "Status": extract(/status:\s*([^,]+)/i, shipmentPart),
-                "Customer Name": extract(/customer name:\s*([^,]+)/i, shipmentPart),
-                "Service Code": extract(/service code:\s*([^,]+)/i, shipmentPart),
-                "Order Reference": extract(/order reference:\s*([^,]+)/i, shipmentPart),
-                "Currency": extract(/currency:\s*([^,]+)/i, shipmentPart),
-                "Price": extract(/price:\s*([^,]+)/i, shipmentPart),
-                "Consignee Name": extract(/consignee name:\s*([^,]+)/i, shipmentPart),
-                "Consignee City": extract(/consignee city:\s*([^,]+)/i, shipmentPart),
-                "Consignee Country": extract(/consignee country:\s*([^,]+)/i, shipmentPart),
-                "Consignee Phone": extract(/consignee phone:\s*([^,]+)/i, shipmentPart),
-                "Shipper Name": extract(/shipper name:\s*([^,]+)/i, shipmentPart),
-                "Shipper City": extract(/shipper city:\s*([^,]+)/i, shipmentPart),
-                "Shipper Country": extract(/shipper country:\s*([^,]+)/i, shipmentPart),
-                "Shipper Phone": extract(/shipper phone:\s*([^,]+)/i, shipmentPart)
-            };
+
+            // Common Extractions
+            const shipment_num = extract(/(?:shipment:|shipment)\s*([A-Z0-9]+)/i, safeText) || extract(/S\d{9,}/, safeText);
+            const customer_name = extract(/customer name:\s*([^,]+)/i, safeText);
+            const service_code = extract(/service code:\s*([^,]+)/i, safeText);
+            const order_ref = extract(/order reference:\s*([^,]+)/i, safeText);
+
+            if (mode === 'survey') {
+                const parts = safeText.split("|||");
+                const surveyPart = parts[0] || "";
+                const shipmentPart = parts[1] || "";
+
+                return {
+                    "Shipment Number": extract(/Survey for shipment:\s*([^,]+)/i, surveyPart) || shipment_num,
+                    "CSAT": extract(/How was your experience\?\s*(\d+)/i, surveyPart),
+                    "NPS": extract(/Recommendation Rate:\s*(\d+)/i, surveyPart),
+                    "Speed of Delivery": extract(/How is delivery speed\?\s*(\d+)/i, surveyPart),
+                    "Shipment Condition": extract(/How was package condition\?\s*(\d+)/i, surveyPart),
+                    "Courier Behavior": extract(/Was the courier's behavior good\?\s*(\d+)/i, surveyPart),
+                    "Payment Issue": extract(/Any payment issue\?\s*([^,]+)/i, surveyPart),
+                    "Improvement Suggestions": extract(/How can we improve\?\s*([^,]+)/i, surveyPart),
+                    "Status": extract(/status:\s*([^,]+)/i, shipmentPart),
+                    "Customer Name": extract(/customer name:\s*([^,]+)/i, shipmentPart),
+                    "Service Code": extract(/service code:\s*([^,]+)/i, shipmentPart),
+                    "Order Reference": extract(/order reference:\s*([^,]+)/i, shipmentPart),
+                    "Currency": extract(/currency:\s*([^,]+)/i, shipmentPart),
+                    "Price": extract(/price:\s*([^,]+)/i, shipmentPart),
+                    "Consignee Name": extract(/consignee name:\s*([^,]+)/i, shipmentPart),
+                    "Consignee City": extract(/consignee city:\s*([^,]+)/i, shipmentPart),
+                    "Consignee Country": extract(/consignee country:\s*([^,]+)/i, shipmentPart),
+                    "Consignee Phone": extract(/consignee phone:\s*([^,]+)/i, shipmentPart),
+                    "Shipper Name": extract(/shipper name:\s*([^,]+)/i, shipmentPart),
+                    "Shipper City": extract(/shipper city:\s*([^,]+)/i, shipmentPart),
+                    "Shipper Country": extract(/shipper country:\s*([^,]+)/i, shipmentPart),
+                    "Shipper Phone": extract(/shipper phone:\s*([^,]+)/i, shipmentPart)
+                };
+            }
+
+            else if (mode === 'undelivered') {
+                // Example: Undelivered - Invalid Reason: for shipment: S0006314778, ndr: NO RESPONSE - لا يوجد رد, status: Delivery Attempted, customer name: ...
+                return {
+                    "Shipment Number": shipment_num,
+                    "NDR Reason": extract(/ndr:\s*([^,]+)/i, safeText),
+                    "Status": extract(/status:\s*([^,]+)/i, safeText),
+                    "Customer Name": customer_name,
+                    "Service Code": service_code,
+                    "Order Reference": order_ref,
+                    "Customer ID Ref": extract(/customer id reference:\s*([^,]+)/i, safeText),
+                    "Incoterm": extract(/incoterm:\s*([^,]+)/i, safeText),
+                };
+            }
+
+            else if (mode === 'dispute') {
+                // Example: Dispute - Not delivered: for shipment: ... ndr: ... status: ...
+                return {
+                    "Shipment Number": shipment_num,
+                    "Dispute Reason": extract(/Dispute - ([^:]+):/i, safeText) || "Dispute",
+                    "NDR": extract(/ndr:\s*([^,]+)/i, safeText),
+                    "Status": extract(/status:\s*([^,]+)/i, safeText),
+                    "Customer Name": customer_name,
+                    "Service Code": service_code,
+                    "Order Reference": order_ref
+                };
+            }
+            return null;
         }
     </script>
 
