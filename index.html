@@ -646,7 +646,15 @@
                                 const apiResp = await fetchShipmentData(ref);
                                 if (apiResp && apiResp.events) {
                                     const riderInfo = extractRiderInfo(apiResp.events);
-                                    if (riderInfo) Object.assign(item, riderInfo);
+                                    if (riderInfo) {
+                                        Object.assign(item, riderInfo);
+                                    } else {
+                                        // No delivered event found, default courier_partner to SELF
+                                        item.courier_partner = 'SELF';
+                                    }
+                                } else {
+                                    // No API data, default courier_partner to SELF
+                                    item.courier_partner = 'SELF';
                                 }
                             } catch (e) {
                                 if (e.message === "MISSING_API_KEY") throw e; // Stop everything
