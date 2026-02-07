@@ -611,11 +611,7 @@
             if (!events || !Array.isArray(events)) return null;
             const deliveredEvent = events.find(ev => ev.type === 'delivered');
             if (!deliveredEvent) return null;
-            // courier_partner: return "SELF" if null/empty/"SELF", otherwise return the actual value
-            const rawPartner = deliveredEvent.courier_partner;
-            const courier_partner = (!rawPartner || rawPartner.toUpperCase() === 'SELF') ? 'SELF' : rawPartner;
             return {
-                courier_partner: courier_partner,
                 worker_name: deliveredEvent.worker_name || '',
                 worker_code: deliveredEvent.worker_code || '',
                 worker_phone: deliveredEvent.worker_phone || '',
@@ -644,13 +640,17 @@
                         if (ref) {
                             try {
                                 const apiResp = await fetchShipmentData(ref);
-                                if (apiResp && apiResp.events) {
-                                    const riderInfo = extractRiderInfo(apiResp.events);
-                                    if (riderInfo) {
-                                        Object.assign(item, riderInfo);
-                                    } else {
-                                        // No delivered event found, default courier_partner to SELF
-                                        item.courier_partner = 'SELF';
+                                if (apiResp) {
+                                    // Get courier_partner from root level of API response
+                                    const rawPartner = apiResp.courier_partner;
+                                    item.courier_partner = (!rawPartner || rawPartner.toUpperCase() === 'SELF') ? 'SELF' : rawPartner;
+
+                                    // Get rider info from delivered event if available
+                                    if (apiResp.events) {
+                                        const riderInfo = extractRiderInfo(apiResp.events);
+                                        if (riderInfo) {
+                                            Object.assign(item, riderInfo);
+                                        }
                                     }
                                 } else {
                                     // No API data, default courier_partner to SELF
