@@ -521,19 +521,19 @@
             "Status", "Customer Name", "Service Code", "Order Reference", "Currency", "Price",
             "Consignee Name", "Consignee City", "Consignee Country", "Consignee Phone",
             "Shipper Name", "Shipper City", "Shipper Country", "Shipper Phone",
-            "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
+            "courier_partner", "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
         ];
 
         const COLS_UNDELIVERED = [
             "Date", "Time", "Bot User", "Shipment Number", "NDR Reason", "Status",
             "Customer Name", "Service Code", "Order Reference", "Customer ID Ref", "Incoterm",
-            "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
+            "courier_partner", "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
         ];
 
         const COLS_DISPUTE = [
             "Date", "Time", "Bot User", "Shipment Number", "Dispute Reason", "NDR", "Status",
             "Customer Name", "Service Code", "Order Reference",
-            "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
+            "courier_partner", "worker_name", "worker_code", "worker_phone", "delivery_date", "delivery_time", "hub_code"
         ];
 
         function getColumns() {
@@ -611,7 +611,11 @@
             if (!events || !Array.isArray(events)) return null;
             const deliveredEvent = events.find(ev => ev.type === 'delivered');
             if (!deliveredEvent) return null;
+            // courier_partner: return "SELF" if null/empty/"SELF", otherwise return the actual value
+            const rawPartner = deliveredEvent.courier_partner;
+            const courier_partner = (!rawPartner || rawPartner.toUpperCase() === 'SELF') ? 'SELF' : rawPartner;
             return {
+                courier_partner: courier_partner,
                 worker_name: deliveredEvent.worker_name || '',
                 worker_code: deliveredEvent.worker_code || '',
                 worker_phone: deliveredEvent.worker_phone || '',
